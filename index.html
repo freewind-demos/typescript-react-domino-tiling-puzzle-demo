@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>骨牌平铺问题</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .description {
+      text-align: center;
+      color: #888;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .panel h2 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #e94560;
+    }
+
+    .grid-container {
+      position: relative;
+    }
+
+    .grid {
+      display: grid;
+      gap: 2px;
+      background: #0f0f23;
+      padding: 2px;
+      border-radius: 4px;
+    }
+
+    .cell {
+      width: 30px;
+      height: 30px;
+      background: #1f4068;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cell:hover { background: #2d5a7b; }
+    .cell.filled { background: #e94560; }
+    .cell.selected { background: #4ecca3; }
+    .cell.placed { background: #f9ed69; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button:hover { transform: scale(1.02); }
+    button:active { transform: scale(0.98); }
+
+    .btn-primary { background: #e94560; color: #fff; }
+    .btn-secondary { background: #4ecca3; color: #1a1a2e; }
+    .btn-danger { background: #ff6b6b; color: #fff; }
+
+    .fragments-container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      max-width: 500px;
+    }
+
+    .fragment {
+      background: #0f3460;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .fragment:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(78, 204, 163, 0.5); }
+    .fragment.selected { box-shadow: 0 0 15px rgba(233, 69, 96, 0.7); border: 2px solid #e94560; }
+    .fragment.solved { background: #2d5a7b; }
+
+    .fragment-grid {
+      display: grid;
+      gap: 2px;
+    }
+
+    .fragment-cell {
+      width: 20px;
+      height: 20px;
+      background: #4ecca3;
+      border-radius: 2px;
+    }
+
+    .fragment-cell.empty {
+      background: transparent;
+    }
+
+    .result-panel {
+      text-align: center;
+      padding: 30px;
+      min-width: 200px;
+    }
+
+    .result-icon {
+      font-size: 60px;
+      margin-bottom: 15px;
+    }
+
+    .result-text {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .result-success { color: #4ecca3; }
+    .result-fail { color: #e94560; }
+
+    .stats {
+      margin-top: 20px;
+      text-align: left;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .stats div { margin: 5px 0; }
+
+    .backtrack-info {
+      margin-top: 15px;
+      padding: 10px;
+      background: #0f0f23;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #666;
+      display: none;
+    }
+
+    .backtrack-info.visible { display: block; }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 15px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      justify-content: center;
+    }
+
+    .mode-btn {
+      padding: 6px 12px;
+      background: #0f3460;
+      color: #888;
+      border: 2px solid transparent;
+    }
+
+    .mode-btn.active {
+      border-color: #e94560;
+      color: #fff;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>骨牌平铺问题</h1>
+  <p class="description">点击格子绘制形状，选择碎块，判断能否铺满</p>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-color" style="background: #e94560;"></div>
+      <span>原始形状</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #4ecca3;"></div>
+      <span>当前选中碎块</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #f9ed69;"></div>
+      <span>已放置碎块</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- 原始形状 -->
+    <div class="panel">
+      <h2>原始形状</h2>
+      <div class="grid-container">
+        <div class="grid" id="originalGrid"></div>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" onclick="setMode('draw')">绘制</button>
+        <button class="btn-secondary" onclick="setMode('erase')">擦除</button>
+        <button class="btn-danger" onclick="clearOriginal()">清空</button>
+      </div>
+      <p class="help-text">绘制完形状后，点击"生成碎块"按钮随机打散</p>
+    </div>
+
+    <!-- 碎块选择 -->
+    <div class="panel">
+      <h2>碎块 (<span id="fragmentCount">0</span>)</h2>
+      <div class="mode-toggle">
+        <button class="mode-btn active" onclick="setFragmentMode('click')" id="modeClick">点击选择</button>
+        <button class="mode-btn" onclick="setFragmentMode('auto')" id="modeAuto">自动放置</button>
+      </div>
+      <div class="fragments-container" id="fragmentsContainer"></div>
+      <div class="controls" style="margin-top: 15px;">
+        <button class="btn-primary" onclick="generateFragments()">生成碎块</button>
+        <button class="btn-danger" onclick="clearFragments()">清空</button>
+      </div>
+      <div id="backtrackInfo" class="backtrack-info"></div>
+    </div>
+
+    <!-- 结果 -->
+    <div class="panel result-panel">
+      <h2>结果</h2>
+      <div class="result-icon" id="resultIcon">?</div>
+      <div class="result-text" id="resultText">等待判断</div>
+      <div class="stats" id="stats">
+        <div>原始格子: <span id="statOriginal">0</span></div>
+        <div>碎块总数: <span id="statFragments">0</span></div>
+        <div>碎块格子: <span id="statCells">0</span></div>
+      </div>
+      <div class="controls" style="margin-top: 20px; justify-content: center;">
+        <button class="btn-secondary" onclick="solve()">开始判断</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============== 数据结构 ==============
+
+    // 原始形状格子集合
+    let originalCells = new Set();
+
+    // 碎块数组，每个碎块 = { id, cells: [[x,y], ...] }
+    let fragments = [];
+
+    // 当前选中的碎块索引
+    let selectedFragmentIndex = -1;
+
+    // 绘制模式
+    let drawMode = 'draw'; // 'draw' | 'erase'
+
+    // 碎块选择模式
+    let fragmentMode = 'click'; // 'click' | 'auto'
+
+    // 网格尺寸
+    const GRID_WIDTH = 15;
+    const GRID_HEIGHT = 12;
+
+    // 回溯统计
+    let backtrackCount = 0;
+    let maxDepth = 0;
+
+    // ============== 初始化 ==============
+
+    function init() {
+      createGrid('originalGrid', GRID_WIDTH, GRID_HEIGHT, handleCellClick);
+      updateStats();
+    }
+
+    function createGrid(containerId, width, height, clickHandler) {
+      const grid = document.getElementById(containerId);
+      grid.style.gridTemplateColumns = `repeat(${width}, 30px)`;
+      grid.innerHTML = '';
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.x = x;
+          cell.dataset.y = y;
+          cell.addEventListener('click', () => clickHandler(x, y));
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    // ============== 原始形状绘制 ==============
+
+    function handleCellClick(x, y) {
+      const key = `${x},${y}`;
+
+      if (drawMode === 'draw') {
+        originalCells.add(key);
+      } else {
+        originalCells.delete(key);
+      }
+
+      renderOriginalGrid();
+      updateStats();
+    }
+
+    function renderOriginalGrid() {
+      const cells = document.querySelectorAll('#originalGrid .cell');
+      cells.forEach(cell => {
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        const key = `${x},${y}`;
+
+        cell.classList.remove('filled', 'selected', 'placed');
+        if (originalCells.has(key)) {
+          cell.classList.add('filled');
+        }
+      });
+    }
+
+    function clearOriginal() {
+      originalCells.clear();
+      renderOriginalGrid();
+      updateStats();
+    }
+
+    function setMode(mode) {
+      drawMode = mode;
+    }
+
+    // ============== 碎块生成 ==============
+
+    function generateFragments() {
+      if (originalCells.size === 0) {
+        alert('请先绘制原始形状');
+        return;
+      }
+
+      // 将格子转换为坐标数组
+      const cells = Array.from(originalCells).map(key => {
+        const [x, y] = key.split(',').map(Number);
+        return [x, y];
+      });
+
+      // 随机打散生成碎块
+      fragments = [];
+      const used = new Set();
+
+      // 随机决定碎块数量（2-5块）
+      const numFragments = Math.floor(Math.random() * 4) + 2;
+
+      for (let i = 0; i < numFragments && cells.length > 0; i++) {
+        // 随机选择起始点
+        const availableCells = cells.filter((_, idx) => !used.has(idx));
+        if (availableCells.length === 0) break;
+
+        const startIdx = Math.floor(Math.random() * availableCells.length);
+        const startCell = availableCells[startIdx];
+        const startKey = `${startCell[0]},${startCell[1]}`;
+        const startOriginalIdx = cells.findIndex(c => c[0] === startCell[0] && c[1] === startCell[1]);
+
+        // BFS/DFS 扩展形成碎块
+        const fragmentCells = [];
+        const visited = new Set();
+        const queue = [startCell];
+        visited.add(startKey);
+
+        // 随机决定当前碎块大小
+        const targetSize = Math.min(
+          availableCells.length,
+          Math.floor(Math.random() * 4) + 1 // 1-4块
+        );
+
+        while (fragmentCells.length < targetSize && queue.length > 0) {
+          const randomIdx = Math.floor(Math.random() * queue.length);
+          const cell = queue.splice(randomIdx, 1)[0];
+          fragmentCells.push(cell);
+
+          // 找到四个方向的邻居
+          const neighbors = [
+            [cell[0] - 1, cell[1]],
+            [cell[0] + 1, cell[1]],
+            [cell[0], cell[1] - 1],
+            [cell[0], cell[1] + 1]
+          ];
+
+          for (const neighbor of neighbors) {
+            const nKey = `${neighbor[0]},${neighbor[1]}`;
+            if (!visited.has(nKey) && originalCells.has(nKey)) {
+              // 检查邻居是否在剩余可用格子中
+              const nIdx = cells.findIndex(c => c[0] === neighbor[0] && c[1] === neighbor[1]);
+              if (nIdx !== -1 && !used.has(nIdx)) {
+                visited.add(nKey);
+                queue.push(neighbor);
+              }
+            }
+          }
+        }
+
+        // 标记这些格子为已使用
+        fragmentCells.forEach(cell => {
+          const idx = cells.findIndex(c => c[0] === cell[0] && c[1] === cell[1]);
+          used.add(idx);
+        });
+
+        fragments.push({
+          id: i,
+          cells: fragmentCells,
+          offsetX: 0,
+          offsetY: 0
+        });
+      }
+
+      selectedFragmentIndex = -1;
+      renderFragments();
+      updateStats();
+      clearResult();
+    }
+
+    function renderFragments() {
+      const container = document.getElementById('fragmentsContainer');
+      container.innerHTML = '';
+
+      fragments.forEach((fragment, index) => {
+        const div = document.createElement('div');
+        div.className = 'fragment' + (index === selectedFragmentIndex ? ' selected' : '');
+
+        // 计算当前碎块的边界
+        const xs = fragment.cells.map(c => c[0]);
+        const ys = fragment.cells.map(c => c[1]);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        const width = maxX - minX + 1;
+        const height = maxY - minY + 1;
+
+        const grid = document.createElement('div');
+        grid.className = 'fragment-grid';
+        grid.style.gridTemplateColumns = `repeat(${width}, 20px)`;
+
+        for (let y = minY; y <= maxY; y++) {
+          for (let x = minX; x <= maxX; x++) {
+            const cell = document.createElement('div');
+            const hasCell = fragment.cells.some(c => c[0] === x && c[1] === y);
+            cell.className = 'fragment-cell' + (hasCell ? '' : ' empty');
+            grid.appendChild(cell);
+          }
+        }
+
+        div.appendChild(grid);
+        div.addEventListener('click', () => selectFragment(index));
+        container.appendChild(div);
+      });
+
+      document.getElementById('fragmentCount').textContent = fragments.length;
+    }
+
+    function selectFragment(index) {
+      if (fragmentMode !== 'click') return;
+
+      selectedFragmentIndex = index;
+      renderFragments();
+
+      // 高亮原始形状中被选中碎块占据的位置
+      if (index >= 0) {
+        highlightCellsForFragment(index);
+      } else {
+        renderOriginalGrid();
+      }
+    }
+
+    function highlightCellsForFragment(fragmentIndex) {
+      const fragment = fragments[fragmentIndex];
+      renderOriginalGrid();
+
+      const cells = document.querySelectorAll('#originalGrid .cell');
+      cells.forEach(cell => {
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        const key = `${x},${y}`;
+
+        if (originalCells.has(key)) {
+          // 检查这个格子是否在碎块的某种偏移下可以匹配
+          // 简化：直接高亮碎块原始位置
+          const inFragment = fragment.cells.some(c => c[0] === x && c[1] === y);
+          if (inFragment) {
+            cell.classList.add('selected');
+          }
+        }
+      });
+    }
+
+    function setFragmentMode(mode) {
+      fragmentMode = mode;
+      document.getElementById('modeClick').classList.toggle('active', mode === 'click');
+      document.getElementById('modeAuto').classList.toggle('active', mode === 'auto');
+
+      if (mode === 'auto') {
+        solve();
+      }
+    }
+
+    function clearFragments() {
+      fragments = [];
+      selectedFragmentIndex = -1;
+      renderFragments();
+      renderOriginalGrid();
+      updateStats();
+      clearResult();
+    }
+
+    // ============== 回溯求解 ==============
+
+    function solve() {
+      if (originalCells.size === 0) {
+        showResult(false, '请先绘制原始形状');
+        return;
+      }
+
+      if (fragments.length === 0) {
+        showResult(false, '请先生成碎块');
+        return;
+      }
+
+      // 检查面积是否相等
+      let totalFragmentCells = fragments.reduce((sum, f) => sum + f.cells.length, 0);
+      if (totalFragmentCells !== originalCells.size) {
+        showResult(false, `面积不匹配: 原始${originalCells.size} vs 碎块${totalFragmentCells}`);
+        return;
+      }
+
+      // 准备求解
+      backtrackCount = 0;
+      maxDepth = 0;
+
+      // 将原始格子转换为数组
+      const originalArray = Array.from(originalCells).map(key => {
+        const [x, y] = key.split(',').map(Number);
+        return { x, y, key };
+      });
+
+      // 按大小降序排列碎块（优化：先尝试大的）
+      const sortedIndices = fragments
+        .map((_, i) => i)
+        .sort((a, b) => fragments[b].cells.length - fragments[a].cells.length);
+
+      // 记录每个碎块的放置位置
+      const placements = new Array(fragments.length).fill(null);
+
+      // 显示回溯信息
+      const infoDiv = document.getElementById('backtrackInfo');
+      infoDiv.classList.add('visible');
+
+      // 执行回溯
+      const startTime = performance.now();
+      const success = backtrack(
+        sortedIndices,
+        0,
+        originalArray,
+        placements,
+        (count, depth) => {
+          infoDiv.textContent = `搜索中... 已回溯${count}次, 深度${depth}`;
+        }
+      );
+      const elapsed = performance.now() - startTime;
+
+      if (success) {
+        // 应用放置结果
+        sortedIndices.forEach((fragIdx, placementIdx) => {
+          fragments[fragIdx].offsetX = placements[fragIdx].offsetX;
+          fragments[fragIdx].offsetY = placements[fragIdx].offsetY;
+        });
+        showResult(true, `成功! 用时${elapsed.toFixed(1)}ms, 回溯${backtrackCount}次`);
+        renderSolution();
+      } else {
+        showResult(false, `失败! 用时${elapsed.toFixed(1)}ms, 回溯${backtrackCount}次`);
+      }
+    }
+
+    function backtrack(indices, idx, originalArray, placements, progressCallback) {
+      backtrackCount++;
+      maxDepth = Math.max(maxDepth, idx);
+
+      if (idx >= indices.length) {
+        return true; // 所有碎块都放置成功
+      }
+
+      const fragIdx = indices[idx];
+      const fragment = fragments[fragIdx];
+
+      // 计算碎块中格子的边界
+      const xs = fragment.cells.map(c => c[0]);
+      const ys = fragment.cells.map(c => c[1]);
+      const fragMinX = Math.min(...xs);
+      const fragMaxX = Math.max(...xs);
+      const fragMinY = Math.min(...ys);
+      const fragMaxY = Math.max(...ys);
+      const fragWidth = fragMaxX - fragMinX + 1;
+      const fragHeight = fragMaxY - fragMinY + 1;
+
+      // 尝试原始形状中每个格子作为放置位置
+      for (const cell of originalArray) {
+        // 计算如果把碎块左上角对齐到这个格子，需要的偏移量
+        const offsetX = cell.x - fragMinX;
+        const offsetY = cell.y - fragMinY;
+
+        // 检查这个位置是否合法
+        if (canPlace(fragment, offsetX, offsetY, originalArray, placements, idx, indices)) {
+          // 放置碎块
+          placements[fragIdx] = { offsetX, offsetY, usedCells: new Set() };
+
+          // 标记使用的格子
+          fragment.cells.forEach(c => {
+            const key = `${c[0] + offsetX},${c[1] + offsetY}`;
+            placements[fragIdx].usedCells.add(key);
+          });
+
+          // 递归放置下一个碎块
+          if (backtrack(indices, idx + 1, originalArray, placements, progressCallback)) {
+            return true;
+          }
+
+          // 回溯
+          placements[fragIdx] = null;
+        }
+      }
+
+      if (backtrackCount % 100 === 0) {
+        progressCallback(backtrackCount, idx);
+      }
+
+      return false;
+    }
+
+    function canPlace(fragment, offsetX, offsetY, originalArray, placements, currentIdx, indices) {
+      // 检查碎块的每个格子
+      for (const cell of fragment.cells) {
+        const x = cell[0] + offsetX;
+        const y = cell[1] + offsetY;
+        const key = `${x},${y}`;
+
+        // 检查是否在原始形状内
+        if (!originalCells.has(key)) {
+          return false;
+        }
+
+        // 检查是否已被其他碎块占据
+        for (let i = 0; i < currentIdx; i++) {
+          const prevFragIdx = indices[i];
+          const placement = placements[prevFragIdx];
+          if (placement && placement.usedCells.has(key)) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    }
+
+    function renderSolution() {
+      // 高亮已放置的碎块
+      const cells = document.querySelectorAll('#originalGrid .cell');
+      cells.forEach(cell => {
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        const key = `${x},${y}`;
+
+        cell.classList.remove('placed', 'selected');
+
+        // 检查哪个碎块覆盖了这个格子
+        for (const fragment of fragments) {
+          const placement = placements ? placements[fragment.id] : null;
+          if (placement) {
+            const hasCell = fragment.cells.some(c =>
+              c[0] + placement.offsetX === x && c[1] + placement.offsetY === y
+            );
+            if (hasCell) {
+              cell.classList.add('placed');
+              break;
+            }
+          }
+        }
+      });
+    }
+
+    // ============== 结果显示 ==============
+
+    function showResult(success, message) {
+      document.getElementById('resultIcon').textContent = success ? '✓' : '✗';
+      document.getElementById('resultIcon').style.color = success ? '#4ecca3' : '#e94560';
+      document.getElementById('resultText').textContent = message;
+      document.getElementById('resultText').className = 'result-text ' + (success ? 'result-success' : 'result-fail');
+    }
+
+    function clearResult() {
+      document.getElementById('resultIcon').textContent = '?';
+      document.getElementById('resultIcon').style.color = '#666';
+      document.getElementById('resultText').textContent = '等待判断';
+      document.getElementById('resultText').className = 'result-text';
+      document.getElementById('backtrackInfo').classList.remove('visible');
+      renderOriginalGrid();
+    }
+
+    function updateStats() {
+      document.getElementById('statOriginal').textContent = originalCells.size;
+      document.getElementById('statFragments').textContent = fragments.length;
+      document.getElementById('statCells').textContent = fragments.reduce((sum, f) => sum + f.cells.length, 0);
+    }
+
+    // 初始化
+    init();
+  </script>
+</body>
+</html>
