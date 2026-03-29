@@ -1,0 +1,403 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.description {
+  text-align: center;
+  color: #888;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.layout-three {
+  display: grid;
+  /* 左栏随棋盘宽度收缩，不把空白摊在题目旁 */
+  grid-template-columns: fit-content(20rem) minmax(280px, 1.4fr) minmax(200px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .layout-three {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel--board {
+  max-width: 20rem;
+  justify-self: start;
+}
+
+.panel--board .grid-container {
+  width: fit-content;
+}
+
+.panel--builder {
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.builder-clear-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 8px;
+}
+
+.budget-hint {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.budget-hint--ratio {
+  text-align: center;
+  padding: 12px 14px;
+}
+
+.budget-hint-fraction {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+.budget-hint--muted {
+  color: #666;
+  border-style: dashed;
+}
+
+.budget-hint--short {
+  color: #d4d4d8;
+  background: rgba(234, 179, 8, 0.08);
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+.budget-hint--match {
+  color: #a7f3d0;
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.budget-hint--over {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.builder-block {
+  margin-bottom: 16px;
+}
+
+.builder-label {
+  font-size: 12px;
+  color: #e94560;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.size-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.size-chip {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 2px solid #2d4a7c;
+  background: #0f3460;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.size-chip:hover {
+  border-color: #e94560;
+  color: #fff;
+}
+
+.size-chip.active {
+  border-color: #e94560;
+  color: #fff;
+  background: #1a3a66;
+}
+
+.shape-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+  background: #0f0f23;
+  border-radius: 8px;
+}
+
+.shape-gallery-item {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #2d4a7c;
+  background: #16213e;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.shape-gallery-item:hover {
+  border-color: #4ecca3;
+  box-shadow: 0 0 8px rgba(78, 204, 163, 0.25);
+}
+
+.thumb-grid {
+  display: grid;
+  gap: 1px;
+}
+
+.thumb-cell {
+  background: #4ecca3;
+  border-radius: 2px;
+}
+
+.thumb-cell.empty {
+  background: transparent;
+}
+
+.fragment-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.fragment-list-empty {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.fragment-list-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-tiny {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.panel {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.panel h2 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #e94560;
+}
+
+.grid-container {
+  position: relative;
+}
+
+.grid {
+  display: grid;
+  gap: 2px;
+  background: #0f0f23;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.board-grid {
+  touch-action: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+.cell {
+  width: 30px;
+  height: 30px;
+  background: #1f4068;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cell:hover {
+  background: #2d5a7b;
+}
+
+.cell.filled {
+  background: #e94560;
+}
+
+.cell.selected {
+  background: #4ecca3;
+}
+
+.cell.placed {
+  background: #f9ed69;
+}
+
+/* 求解成功时由行内 backgroundColor 覆盖，与中间栏碎块颜色一致 */
+.cell.cell-solution {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition:
+    transform 0.1s,
+    opacity 0.2s;
+}
+
+button:hover {
+  transform: scale(1.02);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #4ecca3;
+  color: #1a1a2e;
+}
+
+.btn-danger {
+  background: #ff6b6b;
+  color: #fff;
+}
+
+.fragment {
+  background: #0f3460;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+
+.fragment:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(78, 204, 163, 0.5);
+}
+
+.fragment.selected {
+  box-shadow: 0 0 15px rgba(233, 69, 96, 0.7);
+  border: 2px solid #e94560;
+}
+
+.fragment-grid {
+  display: grid;
+  gap: 2px;
+}
+
+.fragment-cell {
+  width: 20px;
+  height: 20px;
+  background: #4ecca3;
+  border-radius: 2px;
+}
+
+.fragment-cell.empty {
+  background: transparent;
+}
+
+.result-panel {
+  text-align: center;
+  padding: 30px;
+  min-width: 200px;
+}
+
+.result-icon {
+  font-size: 60px;
+  margin-bottom: 15px;
+}
+
+.result-text {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.result-success {
+  color: #4ecca3;
+}
+
+.result-fail {
+  color: #e94560;
+}
+
+.stats {
+  margin-top: 20px;
+  text-align: left;
+  font-size: 14px;
+  color: #888;
+}
+
+.stats div {
+  margin: 5px 0;
+}
+
+.backtrack-info {
+  margin-top: 15px;
+  padding: 10px;
+  background: #0f0f23;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666;
+  display: none;
+}
+
+.backtrack-info.visible {
+  display: block;
+}
+
+.help-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.panel-muted {
+  color: #555;
+  font-style: italic;
+}
